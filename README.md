@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/1377280318.svg)](https://doi.org/10.5281/zenodo.22848939)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22848939.svg)](https://doi.org/10.5281/zenodo.22848939)
 
 # AssemblyHAR Code
 
