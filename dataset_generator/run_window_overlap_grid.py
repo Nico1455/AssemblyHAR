@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from signal_preprocessing.core import PreprocessingConfig
-from signal_preprocessing.preprocessing_main import main as run_preprocessing
+from dataset_generator.core import PreprocessingConfig
+from dataset_generator.run_dataset_generator import main as run_generator
 
 
 # ============================================================
@@ -103,7 +103,7 @@ def run_grid(window_range_start: int, window_range_end: int, overlaps: Iterable[
         )
 
         try:
-            run_preprocessing(config)
+            run_generator(config)
         except Exception as exc:
             failures.append((window_size_sec, overlap_pct, str(exc)))
             print(

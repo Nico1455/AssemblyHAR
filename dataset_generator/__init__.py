@@ -68,4 +68,4 @@ __all__ = [
     "load_session_result",
 ]
 
-__version__ = "0.2.0"  # OOP refactored version
+
