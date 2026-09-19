@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/1377280318.svg)](https://doi.org/10.5281/zenodo.22848939)
+
 # AssemblyHAR Code
 
 This repository contains the source code used to generate and process the dataset described in the paper:
