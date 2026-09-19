@@ -46,6 +46,24 @@ CUTOFF = 0.3
 REPROCESS_ALL_SESSIONS = True
 """If True, force reprocessing of all sessions, ignoring cached outputs."""
 
+INPUT_DIR = "Raw_Data"
+"""Root directory containing the raw session folders."""
+
+OUTPUT_DIR = "Processed_Data"
+"""Root directory for all processed outputs."""
+
+PROCESSED_SESSION_DATA_DIR = "Processed_Session_Data"
+"""Subdirectory under OUTPUT_DIR for per-session processed outputs."""
+
+WINDOWED_DATASETS_DIR = "Windowed_Datasets"
+"""Subdirectory under OUTPUT_DIR for final windowed datasets."""
+
+GROUPED_DATASETS_DIR = "Grouped"
+"""Subdirectory used for grouped dataset exports."""
+
+UNGROUPED_DATASETS_DIR = "Ungrouped"
+"""Subdirectory used for ungrouped dataset exports."""
+
 # ============================================================
 # Windowing Configuration
 # ============================================================

@@ -5,6 +5,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dataset_generator.core import PreprocessingConfig, ActivityManager, WindowGenerator, SessionProcessor, DatasetBuilder
+from dataset_generator.core.signal_preprocessing_config import (
+    INPUT_DIR,
+    OUTPUT_DIR,
+    PROCESSED_SESSION_DATA_DIR,
+)
 from dataset_generator.helpers import parse_session_folder_name
 
 
@@ -39,13 +44,16 @@ def main(preprocessing_config: PreprocessingConfig | None = None):
     
     # Iterate through session folders
     print("\n[3/4] Processing sessions...")
-    data_folder = project_root / "Data"
+    data_folder = project_root / INPUT_DIR
+    processed_root = project_root / OUTPUT_DIR
+    processed_session_root = processed_root / PROCESSED_SESSION_DATA_DIR
+    processed_session_root.mkdir(parents=True, exist_ok=True)
     processed_count = 0
     cached_count = 0
     failed_count = 0
     
     for folder in data_folder.iterdir():
-        # Select only session folders inside the Data directory
+        # Select only session folders inside the Raw_Data directory
         if not folder.is_dir() or folder.name == "Dataset" or not folder.name.startswith("session_"):
             continue
         
@@ -59,8 +67,10 @@ def main(preprocessing_config: PreprocessingConfig | None = None):
             continue
         
         # Create session processor
+        processed_session_folder = processed_session_root / folder.name
         session_processor = SessionProcessor(
             session_folder=folder,
+            processed_session_folder=processed_session_folder,
             session_code=session_code,
             order_condition=order_condition,
             config=preprocessing_config,
@@ -130,7 +140,9 @@ def main(preprocessing_config: PreprocessingConfig | None = None):
     print("\n" + "="*80)
     print("PREPROCESSING PIPELINE COMPLETE!")
     print("="*80)
-    print(f"Datasets saved to: {dataset_builder.datasets_folder}")
+    print(f"Input data folder: {project_root / INPUT_DIR}")
+    print(f"Processed session data: {project_root / OUTPUT_DIR / PROCESSED_SESSION_DATA_DIR}")
+    print(f"Windowed datasets saved to: {dataset_builder.datasets_folder}")
     print(f"  - Features: {dataset_builder.dataset_root_features.name}")
     print(f"  - Raw data: {dataset_builder.dataset_root_raw.name}")
     if preprocessing_config.separate_motors:

@@ -8,7 +8,15 @@ from sklearn.preprocessing import LabelEncoder
 from math import floor
 import os
 
-from .signal_preprocessing_config import PreprocessingConfig
+from .signal_preprocessing_config import (
+    PreprocessingConfig,
+    INPUT_DIR,
+    OUTPUT_DIR,
+    PROCESSED_SESSION_DATA_DIR,
+    WINDOWED_DATASETS_DIR,
+    GROUPED_DATASETS_DIR,
+    UNGROUPED_DATASETS_DIR,
+)
 from .activity_manager import ActivityManager
 from ..helpers import (
     encode_labels,
@@ -73,7 +81,8 @@ class DatasetBuilder:
         activity_manager (ActivityManager): Activity manager for motor separation.
         project_root (Path): Project root directory.
         data_folder (Path): Path to Data folder with raw sessions.
-        datasets_folder (Path): Path to Datasets folder for outputs.
+        datasets_folder (Path): Path to the final windowed dataset folder under
+            Processed_Data/Windowed_Datasets/Grouped or Ungrouped.
         dataset_root_features (Path): Output folder for feature datasets.
         dataset_root_raw (Path): Output folder for raw datasets.
         all_sessions_feat (list[pd.DataFrame]): Collected feature dataframes.
@@ -102,7 +111,7 @@ class DatasetBuilder:
             activity_manager (ActivityManager): Activity manager for handling
                 motor separation and activity filtering.
             project_root (Path): Project root directory. Expected to contain
-                Data/ and Datasets/ folders.
+                Raw_Data/ and Processed_Data/ folders.
         
         Example:
             >>> config = PreprocessingConfig()
@@ -112,10 +121,18 @@ class DatasetBuilder:
         self.config = config
         self.activity_manager = activity_manager
         self.project_root = project_root
-        self.data_folder = project_root / "Data"
-        self.datasets_folder = project_root / "Datasets"
+        self.processed_root = project_root / OUTPUT_DIR
+        self.processed_session_root = self.processed_root / PROCESSED_SESSION_DATA_DIR
+        self.windowed_datasets_root = self.processed_root / WINDOWED_DATASETS_DIR
+        self.data_folder = project_root / INPUT_DIR
+        self.datasets_folder = self.windowed_datasets_root / (
+            GROUPED_DATASETS_DIR if config.activity_grouping else UNGROUPED_DATASETS_DIR
+        )
         
-        # Create datasets folder
+        # Create output folders
+        self.processed_root.mkdir(parents=True, exist_ok=True)
+        self.processed_session_root.mkdir(parents=True, exist_ok=True)
+        self.windowed_datasets_root.mkdir(parents=True, exist_ok=True)
         self.datasets_folder.mkdir(parents=True, exist_ok=True)
         
         # Get dataset folder names based on windowing configuration

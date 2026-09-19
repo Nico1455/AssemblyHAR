@@ -4,7 +4,11 @@ from typing import Tuple, Optional
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-from .signal_preprocessing_config import PreprocessingConfig
+from .signal_preprocessing_config import (
+    PreprocessingConfig,
+    OUTPUT_DIR,
+    PROCESSED_SESSION_DATA_DIR,
+)
 from ..helpers import (
     load_session_windowed_df,
     load_session_result,
@@ -74,7 +78,8 @@ class SessionProcessor:
         Basic usage with caching::
         
             processor = SessionProcessor(
-                session_folder=Path("Data/session_1_O1_data"),
+                session_folder=Path("Raw_Data/session_1_O1_data"),
+                processed_session_folder=Path("Processed_Data/Processed_Session_Data/session_1_O1_data"),
                 session_code="1",
                 order_condition="O1",
                 config=config,
@@ -91,11 +96,12 @@ class SessionProcessor:
     def __init__(
         self,
         session_folder: Path,
-        session_code: str,
-        order_condition: str,
-        config: PreprocessingConfig,
-        activity_manager: ActivityManager,
-        window_generator: WindowGenerator
+        processed_session_folder: Path | None = None,
+        session_code: str = "",
+        order_condition: str = "",
+        config: PreprocessingConfig | None = None,
+        activity_manager: ActivityManager | None = None,
+        window_generator: WindowGenerator | None = None
     ):
         """
         Initialize the SessionProcessor.
@@ -121,7 +127,8 @@ class SessionProcessor:
         Example:
             >>> config = PreprocessingConfig()
             >>> processor = SessionProcessor(
-            ...     session_folder=Path("Data/session_1_O1_data"),
+            ...     session_folder=Path("Raw_Data/session_1_O1_data"),
+            ...     processed_session_folder=Path("Processed_Data/Processed_Session_Data/session_1_O1_data"),
             ...     session_code="1",
             ...     order_condition="O1",
             ...     config=config,
@@ -130,6 +137,9 @@ class SessionProcessor:
             ... )
         """
         self.session_folder = session_folder
+        self.processed_session_folder = processed_session_folder or (
+            session_folder.parent.parent / OUTPUT_DIR / PROCESSED_SESSION_DATA_DIR / session_folder.name
+        )
         self.session_code = session_code
         self.order_condition = order_condition
         self.config = config
@@ -139,9 +149,9 @@ class SessionProcessor:
         # Derive file paths following project naming convention
         self.data_file = session_folder / f"session_{session_code}_{order_condition}_watch_data.csv"
         self.button_file = session_folder / f"session_{session_code}_{order_condition}_button_log.csv"
-        self.results_folder = session_folder / f"session_{session_code}_{order_condition}_results"
-        self.windowed_features_file = session_folder / f"session_{session_code}_{order_condition}_windowed_features.csv"
-        self.windowed_raw_file = session_folder / f"session_{session_code}_{order_condition}_windowed_raw.csv"
+        self.results_folder = self.processed_session_folder / f"session_{session_code}_{order_condition}_results"
+        self.windowed_features_file = self.processed_session_folder / f"session_{session_code}_{order_condition}_windowed_features.csv"
+        self.windowed_raw_file = self.processed_session_folder / f"session_{session_code}_{order_condition}_windowed_raw.csv"
     
     def should_reprocess(self) -> bool:
         """
@@ -210,29 +220,29 @@ class SessionProcessor:
         
         print(f"  Loading cached results for session {self.session_code}_{self.order_condition}")
         
-        # Load windowed features and raw data
+        # Load windowed features and raw data from the processed session folder
         features_df = load_session_windowed_df(
-            self.session_folder, self.session_code, self.order_condition, "features"
+            self.processed_session_folder, self.session_code, self.order_condition, "features"
         )
         raw_df = load_session_windowed_df(
-            self.session_folder, self.session_code, self.order_condition, "raw"
+            self.processed_session_folder, self.session_code, self.order_condition, "raw"
         )
         
         # Load summary statistics
         activity_totals_df = load_session_result(
-            self.session_folder, self.session_code, self.order_condition, "activity_totals"
+            self.processed_session_folder, self.session_code, self.order_condition, "activity_totals"
         )
         activity_segments_df = load_session_result(
-            self.session_folder, self.session_code, self.order_condition, "activity_segments"
+            self.processed_session_folder, self.session_code, self.order_condition, "activity_segments"
         )
         phase_stats_df = load_session_result(
-            self.session_folder, self.session_code, self.order_condition, "phase_stats"
+            self.processed_session_folder, self.session_code, self.order_condition, "phase_stats"
         )
         assembly_stats_df = load_session_result(
-            self.session_folder, self.session_code, self.order_condition, "assembly_stats"
+            self.processed_session_folder, self.session_code, self.order_condition, "assembly_stats"
         )
         acceleration_stats_df = load_session_result(
-            self.session_folder, self.session_code, self.order_condition, "acceleration_motor_stats"
+            self.processed_session_folder, self.session_code, self.order_condition, "acceleration_motor_stats"
         )
         
         return features_df, raw_df, activity_totals_df, activity_segments_df, phase_stats_df, assembly_stats_df, acceleration_stats_df
@@ -321,8 +331,9 @@ class SessionProcessor:
         if self.config.activity_grouping:
             labelled_df = self.activity_manager.apply_activity_grouping(labelled_df)
         
+        self.processed_session_folder.mkdir(parents=True, exist_ok=True)
         save_dataframe(
-            labelled_df, self.data_file.parent,
+            labelled_df, self.processed_session_folder,
             f"session_{self.session_code}_{self.order_condition}_labelled"
         )
         
